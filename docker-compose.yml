@@ -1,0 +1,115 @@
+version: '3'
+
+services:
+  spark-master: 
+    container_name: spark-master
+    image: bitnami/spark:3.4.1
+    environment:
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: null
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      SPARK_USER: spark
+    ports:
+      - 7077:7077
+      - 4040:8080
+    restart: unless-stopped
+
+  spark-worker-0:
+    container_name: spark-worker-0
+    image: bitnami/spark:3.4.1
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 4G
+      SPARK_WORKER_CORES: 12
+      SPARK_RPC_AUTHENTICATION_ENABLED: no
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      SPARK_USER: spark
+    ports:
+      - 4041:8081
+    restart: unless-stopped
+
+  jupyter:
+    container_name: jupyter
+    build: .
+    user: root
+    environment:
+      PYTHON_VERSION: 3.9.18
+      JUPYTER_TOKEN: "senha"
+      NB_USER: "user"
+      CHOWN_HOME: "yes"
+      CHOWN_EXTRA_OPTS: "-R"
+    ports:
+      - 8888:8888
+    volumes:
+      - C:/Users/luizh/Desktop/lab/work/:/home/user/work/
+    working_dir: /home/user/
+    restart: unless-stopped
+
+  postgres:
+    container_name: postgres
+    image: postgres:16-alpine3.18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: metastore_db
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - 5432:5432
+    volumes:
+      - C:/Users/luizh/Desktop/lab/pgsql:/var/lib/postgresql/data
+
+  hive-metastore:
+    container_name: hive-metastore
+    image: apache/hive:4.0.0-beta-2-SNAPSHOT
+    depends_on:
+      - postgres
+    environment:
+      SERVICE_NAME: metastore
+      HIVE_VERSION: 4.0.0-beta-2-SNAPSHOT
+      HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
+      DB_DRIVER: postgres
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
+    ports:
+      - 9083:9083
+    volumes:
+      - C:/Users/luizh/Desktop/lab/hive/conf:/hive_custom_conf
+      - C:/Users/luizh/Desktop/lab/hive/warehouse:/opt/hive/data/warehouse
+      - C:/Users/luizh/Desktop/lab/hive/lib:/opt/hive/lib
+    restart: unless-stopped
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:7.0.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports: 
+      - 2181:2181
+    restart: unless-stopped
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:7.0.1
+    depends_on:
+      - zookeeper
+    ports: 
+      - 29092:29092
+      - 9092:9092
+      - 9101:9101
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    restart: unless-stopped
