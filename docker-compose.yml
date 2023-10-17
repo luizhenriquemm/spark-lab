@@ -14,6 +14,8 @@ services:
     ports:
       - 7077:7077
       - 4040:8080
+    volumes:
+      - C:/Users/luizh/Desktop/lab/spark/conf:/opt/bitnami/spark/conf
     restart: unless-stopped
 
   spark-worker-0:
@@ -33,6 +35,8 @@ services:
       SPARK_USER: spark
     ports:
       - 4041:8081
+    volumes:
+      - C:/Users/luizh/Desktop/lab/spark/conf:/opt/bitnami/spark/conf
     restart: unless-stopped
 
   jupyter:
@@ -48,12 +52,12 @@ services:
     ports:
       - 8888:8888
     volumes:
-      - C:/Users/luizh/Desktop/lab/work/:/home/user/work/
+      - C:/Users/luizh/Desktop/lab/jupyter:/home/user/work
     working_dir: /home/user/
     restart: unless-stopped
 
-  postgres:
-    container_name: postgres
+  postgres-hive-metastore:
+    container_name: postgres-hive-metastore
     image: postgres:16-alpine3.18
     environment:
       POSTGRES_USER: postgres
@@ -61,9 +65,9 @@ services:
       POSTGRES_DB: metastore_db
       PGDATA: "/var/lib/postgresql/data/pgdata"
     ports:
-      - 5432:5432
+      - 9032:5432
     volumes:
-      - C:/Users/luizh/Desktop/lab/pgsql:/var/lib/postgresql/data
+      - C:/Users/luizh/Desktop/lab/postgres-hive-metastore:/var/lib/postgres/data
 
   hive-metastore:
     container_name: hive-metastore
@@ -75,13 +79,13 @@ services:
       HIVE_VERSION: 4.0.0-beta-2-SNAPSHOT
       HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
       DB_DRIVER: postgres
-      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-hive-metastore:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
     ports:
       - 9083:9083
     volumes:
-      - C:/Users/luizh/Desktop/lab/hive/conf:/hive_custom_conf
-      - C:/Users/luizh/Desktop/lab/hive/warehouse:/opt/hive/data/warehouse
-      - C:/Users/luizh/Desktop/lab/hive/lib:/opt/hive/lib
+      - C:/Users/luizh/Desktop/lab/hive-metastore/conf:/hive_custom_conf
+      - C:/Users/luizh/Desktop/lab/hive-metastore/warehouse:/opt/hive/data/warehouse
+      - C:/Users/luizh/Desktop/lab/hive-metastore/lib:/opt/hive/lib
     restart: unless-stopped
 
   zookeeper:

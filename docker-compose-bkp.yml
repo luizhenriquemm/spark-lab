@@ -1,0 +1,52 @@
+services:
+  spark-master: 
+    container_name: spark-master
+    image: bitnami/spark:3.4.1
+    environment:
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: null
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      SPARK_USER: spark
+    ports:
+      - 7077:7077
+      - 4040:8080
+    volumes:
+      - C:/Users/luizh/Desktop/lab/spark/conf:/opt/bitnami/spark/conf
+      - C:/Users/luizh/Desktop/lab/spark/jars:/opt/bitnami/spark/jars
+    restart: unless-stopped
+    
+  postgres-application:
+    container_name: postgres-application
+    image: postgres:16-alpine3.18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: application
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - 5432:5432
+    volumes:
+      - C:/Users/luizh/Desktop/lab/postgres-application:/var/lib/postgres/data'
+    restart: unless-stopped
+
+  nifi:
+    container_name: nifi
+    image: apache/nifi:1.19.0
+    environment:
+      NIFI_WEB_HTTPS_PORT: 8443
+      SINGLE_USER_CREDENTIALS_USERNAME: admin 
+      SINGLE_USER_CREDENTIALS_PASSWORD: admin
+    ports:
+      - 8443:8443
+    volumes:
+      - C:/Users/luizh/Desktop/lab/nifi:/opt/nifi/nifi-current/ls-target
+    restart: unless-stopped
+  
+  nifi-registry:
+    container_name: nifi-registry
+    image: apache/nifi-registry:1.23.2
+    ports:
+      - 18080:18080
+    restart: unless-stopped
