@@ -1,1 +1,11 @@
 # spark-lab
+
+# Creating the image
+
+The Jupyter image depends on a custom python version, the Dockerfile present here is for that.
+
+Creating the image:
+
+```bash
+docker build . -t 3.4.1
+```

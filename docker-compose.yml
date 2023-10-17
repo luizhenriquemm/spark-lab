@@ -73,7 +73,7 @@ services:
     container_name: hive-metastore
     image: apache/hive:4.0.0-beta-2-SNAPSHOT
     depends_on:
-      - postgres
+      - postgres-hive-metastore
     environment:
       SERVICE_NAME: metastore
       HIVE_VERSION: 4.0.0-beta-2-SNAPSHOT
