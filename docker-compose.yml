@@ -15,7 +15,7 @@ services:
       - 7077:7077
       - 4040:8080
     volumes:
-      - C:/Users/luizh/Desktop/lab/spark/conf:/opt/bitnami/spark/conf
+      - C:/Users/luizh/Documents/GitHub/spark-lab/spark/conf:/opt/bitnami/spark/conf
     restart: unless-stopped
 
   spark-worker-0:
@@ -36,7 +36,7 @@ services:
     ports:
       - 4041:8081
     volumes:
-      - C:/Users/luizh/Desktop/lab/spark/conf:/opt/bitnami/spark/conf
+      - C:/Users/luizh/Documents/GitHub/spark-lab/spark/conf:/opt/bitnami/spark/conf
     restart: unless-stopped
 
   jupyter:
@@ -52,7 +52,7 @@ services:
     ports:
       - 8888:8888
     volumes:
-      - C:/Users/luizh/Desktop/lab/jupyter:/home/user/work
+      - C:/Users/luizh/Documents/GitHub/spark-lab/jupyter:/home/user/work
     working_dir: /home/user/
     restart: unless-stopped
 
@@ -67,7 +67,7 @@ services:
     ports:
       - 9032:5432
     volumes:
-      - C:/Users/luizh/Desktop/lab/postgres-hive-metastore:/var/lib/postgres/data
+      - C:/Users/luizh/Documents/GitHub/spark-lab/postgres-hive-metastore:/var/lib/postgres/data
 
   hive-metastore:
     container_name: hive-metastore
@@ -83,9 +83,9 @@ services:
     ports:
       - 9083:9083
     volumes:
-      - C:/Users/luizh/Desktop/lab/hive-metastore/conf:/hive_custom_conf
-      - C:/Users/luizh/Desktop/lab/hive-metastore/warehouse:/opt/hive/data/warehouse
-      - C:/Users/luizh/Desktop/lab/hive-metastore/lib:/opt/hive/lib
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hive-metastore/conf:/hive_custom_conf
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hive-metastore/warehouse:/opt/hive/data/warehouse
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hive-metastore/lib:/opt/hive/lib
     restart: unless-stopped
 
   zookeeper:
