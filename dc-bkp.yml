@@ -64,3 +64,114 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     restart: unless-stopped
+
+  hive-metastore:
+    container_name: hive-metastore
+    image: apache/hive:4.0.0-beta-2-SNAPSHOT
+    depends_on:
+      - postgres-hive-metastore
+    environment:
+      SERVICE_NAME: metastore
+      HIVE_VERSION: 4.0.0-beta-2-SNAPSHOT
+      HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
+      DB_DRIVER: postgres
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-hive-metastore:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
+    ports:
+      - 9083:9083
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hive-metastore/conf:/hive_custom_conf
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hive-metastore/warehouse:/opt/hive/data/warehouse
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hive-metastore/lib:/opt/hive/lib
+    restart: unless-stopped
+
+  hdfs-namenode:
+    container_name: hdfs-namenode
+    image: gchq/hdfs:3.2
+    healthcheck:
+      test: curl -f http://localhost:9870 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: namenode
+    hostname: hdfs-namenode
+    environment:
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/conf:/etc/hadoop/conf:ro
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/log:/var/log/hadoop
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data1:/data1
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data2:/data2
+
+  hdfs-datanode:
+    container_name: hdfs-datanode
+    image: gchq/hdfs:3.2
+    depends_on:
+      hdfs-namenode:
+        condition: service_healthy
+    command: datanode
+    hostname: hdfs-datanode
+    environment:
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/conf:/etc/hadoop/conf:ro
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/log:/var/log/hadoop
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data1:/data1
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data2:/data2
+
+  jupyter:
+    container_name: jupyter
+    build: .
+    user: root
+    environment:
+      PYTHON_VERSION: 3.9.18
+      JUPYTER_TOKEN: "senha"
+      NB_USER: "user"
+      CHOWN_HOME: "yes"
+      CHOWN_EXTRA_OPTS: "-R"
+    ports:
+      - 8888:8888
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/jupyter:/home/user/work
+    working_dir: /home/user/
+    restart: unless-stopped
+
+  spark-master: 
+    container_name: spark-master
+    image: bitnami/spark:3.4.1
+    environment:
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: null
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      SPARK_USER: spark
+    ports:
+      - 7077:7077
+      - 4040:8080
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/spark/conf:/opt/bitnami/spark/conf
+    restart: unless-stopped
+
+  spark-worker-0:
+    container_name: spark-worker-0
+    image: bitnami/spark:3.4.1
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 4G
+      SPARK_WORKER_CORES: 12
+      SPARK_RPC_AUTHENTICATION_ENABLED: no
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      SPARK_USER: spark
+    ports:
+      - 4041:8081
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/spark/conf:/opt/bitnami/spark/conf
+    restart: unless-stopped

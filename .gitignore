@@ -1,2 +1,3 @@
 hdfs/data1/*
 hdfs/data2/*
+postgres-hive-metastore/*
