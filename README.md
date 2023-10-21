@@ -2,7 +2,7 @@
 
 # Model
 
-
+![Model](https://github.com/luizhenriquemm/spark-lab/blob/main/model.png)
 
 # Creating the image
 
