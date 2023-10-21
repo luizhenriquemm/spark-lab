@@ -1,6 +1,23 @@
 version: '3'
 
 services:
+  jupyter:
+    container_name: jupyter
+    build: .
+    user: root
+    environment:
+      PYTHON_VERSION: 3.9.18
+      JUPYTER_TOKEN: "senha"
+      NB_USER: "user"
+      CHOWN_HOME: "yes"
+      CHOWN_EXTRA_OPTS: "-R"
+    ports:
+      - 8888:8888
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/jupyter:/home/user/work
+    working_dir: /home/user/
+    restart: unless-stopped
+
   spark-master: 
     container_name: spark-master
     image: bitnami/spark:3.4.1
@@ -37,23 +54,6 @@ services:
       - 4041:8081
     volumes:
       - C:/Users/luizh/Documents/GitHub/spark-lab/spark/conf:/opt/bitnami/spark/conf
-    restart: unless-stopped
-
-  jupyter:
-    container_name: jupyter
-    build: .
-    user: root
-    environment:
-      PYTHON_VERSION: 3.9.18
-      JUPYTER_TOKEN: "senha"
-      NB_USER: "user"
-      CHOWN_HOME: "yes"
-      CHOWN_EXTRA_OPTS: "-R"
-    ports:
-      - 8888:8888
-    volumes:
-      - C:/Users/luizh/Documents/GitHub/spark-lab/jupyter:/home/user/work
-    working_dir: /home/user/
     restart: unless-stopped
 
   postgres-hive-metastore:
