@@ -88,32 +88,39 @@ services:
       - C:/Users/luizh/Documents/GitHub/spark-lab/hive-metastore/lib:/opt/hive/lib
     restart: unless-stopped
 
-  zookeeper:
-    container_name: zookeeper
-    image: confluentinc/cp-zookeeper:7.0.1
+  hdfs-namenode:
+    container_name: hdfs-namenode
+    image: gchq/hdfs:3.2
+    healthcheck:
+      test: curl -f http://localhost:9870 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: namenode
+    hostname: hdfs-namenode
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports: 
-      - 2181:2181
-    restart: unless-stopped
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/conf:/etc/hadoop/conf:ro
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/log:/var/log/hadoop
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data1:/data1
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data2:/data2
 
-  kafka:
-    container_name: kafka
-    image: confluentinc/cp-kafka:7.0.1
+  hdfs-datanode:
+    container_name: hdfs-datanode
+    image: gchq/hdfs:3.2
     depends_on:
-      - zookeeper
-    ports: 
-      - 29092:29092
-      - 9092:9092
-      - 9101:9101
+      hdfs-namenode:
+        condition: service_healthy
+    command: datanode
+    hostname: hdfs-datanode
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    restart: unless-stopped
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    volumes:
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/conf:/etc/hadoop/conf:ro
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/log:/var/log/hadoop
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data1:/data1
+      - C:/Users/luizh/Documents/GitHub/spark-lab/hdfs/data2:/data2
