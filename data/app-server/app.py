@@ -1,30 +1,81 @@
 from flask import Flask, redirect, url_for, request, jsonify
-import psycopg
+import psycopg, os
+from psycopg.rows import dict_row
 
-def pgsql_query(**args):
+def pgsql_query(*args):
     result = None
-    with psycopg.connect("host=postgres-app-server port=5432 dbname=app user=postgres password=password") as conn:
+    with psycopg.connect(
+        "host=postgres-app-server port=5432 dbname=app user=postgres password=password",
+        row_factory=dict_row) as conn:
         with conn.cursor() as cur:
-            cur.execute(**args)
+            cur.execute(*args)
             result = cur.fetchall()
             conn.commit()
     return result
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return 'Index Page'
-
 @app.route('/api/cadastro/novo', methods=['POST'])
+def cadastro_novo():
+    if request.method == 'POST':
+        data = request.json
+        needed_params = [
+            "name",
+            "gender",
+            "birthdate",
+            "address",
+            "city",
+            "state"
+        ]
+
+        for param in needed_params:
+            if param not in data:
+                return {
+                    "status_code": 400,
+                    "error": "HTTP_400_BAD_REQUEST / MISSING_PARAMETER",
+                    "detail": f"Missing parameter: {param}" 
+                }, 400
+        
+        try:
+            q = pgsql_query(
+                "INSERT INTO public.clients (name, gender, birthdate, address, city, state) VALUES (%s, %s, %s, %s, %s, %s)",
+                (
+                    data["name"],
+                    data["gender"],
+                    data["birthdate"],
+                    data["address"],
+                    data["city"],
+                    data["state"]
+                )
+            )
+        except psycopg.errors.InvalidDatetimeFormat as e:
+            return {
+                "status_code": 400,
+                "error": "HTTP_400_BAD_REQUEST / INVALID_PARAMETER",
+                "detail": e
+            }, 400
+
+        return {
+            "status_code": 200,
+            "r": q
+        }, 200
+            
+
+    else:
+        return {
+            "status_code": 405,
+            "error": "HTTP_405_METHOD_NOT_ALLOWED",
+            "detail": f"Method not allowed: {request.method}" 
+        }, 405
 
 @app.route('/api/cadastro/cliente/<cliente_id>', methods=['GET', 'PATCH', 'DELETE'])
 def cadastro_cliente(cliente_id):
     if request.method == 'GET':
-        pass
-
+        client = pgsql_query(f"SELECT * FROM public.clients WHERE client_id = %i", (cliente_id))
+        return jsonify(client), 200
+    
     elif request.method == 'PATCH':
-        data = request.form
+        data = request.json
         needed_params = []
         for param in needed_params:
             if param not in data:
@@ -58,7 +109,10 @@ def hello():
     return 'Hello, World'
 
 if __name__ == '__main__':
+    host = os.environ.get("SERVER_HOST", "localhost")
+    port = os.environ.get("SERVER_PORT", 5000)
+
     app.run(
-        host="0.0.0.0", 
-        port=5000
+        host=host, 
+        port=port
     )
