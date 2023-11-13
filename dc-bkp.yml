@@ -1,25 +1,5 @@
 services:
 
-  nifi:
-    container_name: nifi
-    image: apache/nifi:1.19.0
-    environment:
-      NIFI_WEB_HTTPS_PORT: 8443
-      SINGLE_USER_CREDENTIALS_USERNAME: admin 
-      SINGLE_USER_CREDENTIALS_PASSWORD: admin
-    ports:
-      - 8443:8443
-    volumes:
-      - ${BASE_PATH}/data/nifi:/opt/nifi/nifi-current/ls-target
-    restart: unless-stopped
-  
-  nifi-registry:
-    container_name: nifi-registry
-    image: apache/nifi-registry:1.23.2
-    ports:
-      - 18080:18080
-    restart: unless-stopped
-
   rapids-notebook:
     image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
     container_name: rapids-notebook
