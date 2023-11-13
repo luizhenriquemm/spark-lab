@@ -1,5 +1,11 @@
 data/hdfs/data1/*
 data/hdfs/data2/*
-data/nifi/*
+data/nifi/conf/archive/*
+data/nifi/content_repository/*
+data/nifi/database_repository/*
+data/nifi/flowfile_repository/*
+data/nifi/logs/*
+data/nifi/provenance_repository/*
+data/nifi/state/*
 data/nifi-registry/*
 data/postgres-*

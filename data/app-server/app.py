@@ -1,10 +1,15 @@
 from flask import Flask, redirect, url_for, request, jsonify
-import psycopg, os, json
+import psycopg, os, json, datetime
 from confluent_kafka import Producer
 from psycopg.rows import dict_row
 
 producer = Producer({'bootstrap.servers':'kafka:29092'})
-def kafka_producer(table: str, event: str="create", data: dict = None):
+def kafka_producer(table: str, event: str="create", data_source: dict = None):
+    data = {
+        **data_source,
+        "event": event,
+        "timestamp": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+    }
     data_json = json.dumps(data)
     producer.poll(1)
     producer.produce(
