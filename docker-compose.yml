@@ -57,21 +57,133 @@ services:
       - ${BASE_PATH}/data/spark/conf:/opt/bitnami/spark/conf
     restart: unless-stopped
 
-  rapids-notebook:
-    image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
-    container_name: rapids-notebook
+  postgres-hive-metastore:
+    container_name: postgres-hive-metastore
+    image: postgres:16-alpine3.18
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: metastore_db
+      PGDATA: /data/postgres
     ports:
-      - "8889:8888"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+      - 9032:5432
+    volumes:
+      - ${BASE_PATH}/data/postgres-hive-metastore:/data/postgres
+
+  hive-metastore:
+    container_name: hive-metastore
+    image: apache/hive:4.0.0-beta-2-SNAPSHOT
+    depends_on:
+      - postgres-hive-metastore
+    environment:
+      SERVICE_NAME: metastore
+      HIVE_VERSION: 4.0.0-beta-2-SNAPSHOT
+      HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
+      DB_DRIVER: postgres
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-hive-metastore:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
+    ports:
+      - 9083:9083
+    volumes:
+      - ${BASE_PATH}/data/hive-metastore/conf:/hive_custom_conf
+      - ${BASE_PATH}/data/hive-metastore/warehouse:/opt/hive/data/warehouse
+      - ${BASE_PATH}/data/hive-metastore/lib:/opt/hive/lib
+    restart: unless-stopped
+  
+  hdfs-namenode:
+    container_name: hdfs-namenode
+    image: gchq/hdfs:3.2
+    healthcheck:
+      test: curl -f http://localhost:9870 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: namenode
+    hostname: hdfs-namenode
+    environment:
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - ${BASE_PATH}/data/hdfs/conf:/etc/hadoop/conf:ro
+      - ${BASE_PATH}/data/hdfs/log:/var/log/hadoop
+      - ${BASE_PATH}/data/hdfs/data1:/data1
+      - ${BASE_PATH}/data/hdfs/data2:/data2
+
+  hdfs-datanode:
+    container_name: hdfs-datanode
+    image: gchq/hdfs:3.2
+    depends_on:
+      hdfs-namenode:
+        condition: service_healthy
+    command: datanode
+    hostname: hdfs-datanode
+    environment:
+      - HADOOP_CONF_DIR=/etc/hadoop/conf
+    volumes:
+      - ${BASE_PATH}/data/hdfs/conf:/etc/hadoop/conf:ro
+      - ${BASE_PATH}/data/hdfs/log:/var/log/hadoop
+      - ${BASE_PATH}/data/hdfs/data1:/data1
+      - ${BASE_PATH}/data/hdfs/data2:/data2
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:7.0.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports: 
+      - 2181:2181
+    restart: unless-stopped
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:7.0.1
+    depends_on:
+      - zookeeper
+    ports: 
+      - 29092:29092
+      - 9092:9092
+      - 9101:9101
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    restart: unless-stopped
+
+  postgres-app-server:
+    container_name: postgres-app-server
+    image: postgres:16-alpine3.18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app
+      PGDATA: /data/postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ${BASE_PATH}/data/postgres-app-server:/data/postgres
+      - ${BASE_PATH}/data/app-server/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  app-server:
+    container_name: app-server
+    image: python:3.8-slim-buster
+    depends_on:
+      - postgres-app-server
+    entrypoint: /app/docker-entrypoint.sh
+    environment:
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 5000
+    ports:
+      - 5000:5000
+    volumes:
+      - ${BASE_PATH}/data/app-server:/app
+    restart: unless-stopped
 
 networks:
   default:
