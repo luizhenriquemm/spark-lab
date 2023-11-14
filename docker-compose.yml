@@ -120,6 +120,8 @@ services:
     hostname: hdfs-datanode
     environment:
       - HADOOP_CONF_DIR=/etc/hadoop/conf
+    ports:
+      - 9864:9864
     volumes:
       - ${BASE_PATH}/data/hdfs/conf:/etc/hadoop/conf:ro
       - ${BASE_PATH}/data/hdfs/log:/var/log/hadoop
@@ -165,9 +167,6 @@ services:
       SINGLE_USER_CREDENTIALS_PASSWORD: nifiadminpassword
       NIFI_ZK_CONNECT_STRING: zookeeper:2181
       NIFI_ELECTION_MAX_WAIT: 30 sec
-      # NIFI_CLUSTER_IS_NODE: true
-      # NIFI_CLUSTER_NODE_PROTOCOL_PORT: 8082
-      # NIFI_SENSITIVE_PROPS_KEY: 12345678901234567890A
     ports:
       - 8443:8443
     volumes:
@@ -177,7 +176,8 @@ services:
       - ${BASE_PATH}/data/nifi/provenance_repository:/opt/nifi/nifi-current/provenance_repository
       - ${BASE_PATH}/data/nifi/state:/opt/nifi/nifi-current/state
       - ${BASE_PATH}/data/nifi/logs:/opt/nifi/nifi-current/logs
-      - ${BASE_PATH}/data/nifi/conf:/opt/nifi/nifi-current/conf_
+      - ${BASE_PATH}/data/nifi/conf:/opt/nifi/nifi-current/conf
+      - ${BASE_PATH}/data/hdfs/conf:/opt/nifi/nifi-current/hdfs-conf
     healthcheck:
       test: "${DOCKER_HEALTHCHECK_TEST:-curl localhost:8091/nifi/}"
       interval: 60s
