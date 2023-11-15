@@ -181,6 +181,35 @@ services:
       - ${BASE_PATH}/data/nifi-registry/flow_storage:/opt/nifi-registry/nifi-registry-current/flow_storage
     restart: unless-stopped
 
+  postgres-app-server:
+    container_name: postgres-app-server
+    image: postgres:16-alpine3.18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app
+      PGDATA: /data/postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ${BASE_PATH}/data/postgres-app-server/postgres:/data/postgres
+      - ${BASE_PATH}/data/app-server/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  app-server:
+    container_name: app-server
+    image: python:3.8-slim-buster
+    depends_on:
+      - postgres-app-server
+    entrypoint: /app/docker-entrypoint.sh
+    environment:
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 5000
+    ports:
+      - 5000:5000
+    volumes:
+      - ${BASE_PATH}/data/app-server:/app
+    restart: unless-stopped
+
   trino:
     container_name: trino
     image: trinodb/trino:433
