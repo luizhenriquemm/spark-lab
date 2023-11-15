@@ -6,7 +6,7 @@ services:
     build: images/jupyter/.
     user: root
     environment:
-      PYTHON_VERSION: 3.9.18
+      PYTHON_VERSION: 3.11.6
       JUPYTER_TOKEN: "senha"
       NB_USER: "user"
       CHOWN_HOME: "yes"
@@ -57,30 +57,31 @@ services:
       - ${BASE_PATH}/data/spark/conf:/opt/bitnami/spark/conf
     restart: unless-stopped
 
-  postgres-hive-metastore:
-    container_name: postgres-hive-metastore
+  postgres-internal:
+    container_name: postgres-internal
     image: postgres:16-alpine3.18
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: metastore_db
       PGDATA: /data/postgres
+      POSTGRES_MULTIPLE_DATABASES: hive_metastore,metabase_app
     ports:
       - 9032:5432
     volumes:
-      - ${BASE_PATH}/data/postgres-hive-metastore:/data/postgres
+      - ${BASE_PATH}/data/postgres-internal/postgres:/data/postgres
+      - ${BASE_PATH}/data/postgres-internal/docker-entrypoint:/docker-entrypoint-initdb.d
 
   hive-metastore:
     container_name: hive-metastore
     image: apache/hive:4.0.0-beta-2-SNAPSHOT
     depends_on:
-      - postgres-hive-metastore
+      - postgres-internal
     environment:
       SERVICE_NAME: metastore
       HIVE_VERSION: 4.0.0-beta-2-SNAPSHOT
       HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
       DB_DRIVER: postgres
-      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-hive-metastore:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-internal:5432/hive_metastore -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
     ports:
       - 9083:9083
     volumes:
@@ -230,6 +231,33 @@ services:
     volumes:
       - ${BASE_PATH}/data/app-server:/app
     restart: unless-stopped
+
+  trino:
+    container_name: trino
+    image: trinodb/trino:433
+    ports:
+      - 8000:8080
+    volumes:
+      - ${BASE_PATH}/data/trino/catalog:/etc/trino/catalog
+
+  metabase:
+    container_name: metabase
+    image: metabase/metabase:v0.47.7
+    depends_on:
+      - postgres-internal
+    ports:
+      - 3000:3000
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase_app
+      MB_DB_PORT: 5432
+      MB_DB_USER: postgres
+      MB_DB_PASS: password
+      MB_DB_HOST: postgres-internal
+      MB_PLUGINS_DIR: /plugins/
+    volumes:
+      - ${BASE_PATH}/data/metabase/plugins:/plugins
+    
 
 networks:
   default:

@@ -2,7 +2,7 @@ FROM jupyter/pyspark-notebook:spark-3.4.1
 
 USER root
 
-ARG PYTHON_VERSION=3.9.18
+ARG PYTHON_VERSION=3.11.6
 
 RUN conda install --quiet --yes --no-pin \
     python=${PYTHON_VERSION} && \
