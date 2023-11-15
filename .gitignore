@@ -8,4 +8,4 @@ data/nifi/logs/*
 data/nifi/provenance_repository/*
 data/nifi/state/*
 data/nifi-registry/*
-data/postgres-*
+data/postgres-internal/postgres

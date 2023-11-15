@@ -15,6 +15,7 @@ services:
       - 8888:8888
     volumes:
       - ${BASE_PATH}/data/jupyter:/home/user/work
+      - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
     working_dir: /home/user/
     restart: unless-stopped
 
@@ -34,6 +35,7 @@ services:
       - 6066:6066
     volumes:
       - ${BASE_PATH}/data/spark/conf:/opt/bitnami/spark/conf
+      - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
     restart: unless-stopped
 
   spark-worker-0:
@@ -55,6 +57,7 @@ services:
       - 4041:8081
     volumes:
       - ${BASE_PATH}/data/spark/conf:/opt/bitnami/spark/conf
+      - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
     restart: unless-stopped
 
   postgres-internal:
@@ -89,45 +92,20 @@ services:
       - ${BASE_PATH}/data/hive-metastore/warehouse:/opt/hive/data/warehouse
       - ${BASE_PATH}/data/hive-metastore/lib:/opt/hive/lib
     restart: unless-stopped
-  
-  hdfs-namenode:
-    container_name: hdfs-namenode
-    image: gchq/hdfs:3.2
-    healthcheck:
-      test: curl -f http://localhost:9870 || exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    command: namenode
-    hostname: hdfs-namenode
-    environment:
-      - HADOOP_CONF_DIR=/etc/hadoop/conf
-    ports:
-      - 9870:9870
-      - 9000:9000
-    volumes:
-      - ${BASE_PATH}/data/hdfs/conf:/etc/hadoop/conf:ro
-      - ${BASE_PATH}/data/hdfs/log:/var/log/hadoop
-      - ${BASE_PATH}/data/hdfs/data1:/data1
-      - ${BASE_PATH}/data/hdfs/data2:/data2
 
-  hdfs-datanode:
-    container_name: hdfs-datanode
-    image: gchq/hdfs:3.2
-    depends_on:
-      hdfs-namenode:
-        condition: service_healthy
-    command: datanode
-    hostname: hdfs-datanode
+  minio:
+    container_name: minio
+    image: bitnami/minio:2023.11.11
     environment:
-      - HADOOP_CONF_DIR=/etc/hadoop/conf
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
     ports:
-      - 9864:9864
+      - 9000:9000
+      - 9001:9001
     volumes:
-      - ${BASE_PATH}/data/hdfs/conf:/etc/hadoop/conf:ro
-      - ${BASE_PATH}/data/hdfs/log:/var/log/hadoop
-      - ${BASE_PATH}/data/hdfs/data1:/data1
-      - ${BASE_PATH}/data/hdfs/data2:/data2
+      - ${BASE_PATH}/data/minio/data:/bitnami/minio/data
 
   zookeeper:
     container_name: zookeeper
@@ -201,35 +179,6 @@ services:
     volumes: 
       - ${BASE_PATH}/data/nifi-registry/database:/opt/nifi-registry/nifi-registry-current/database 
       - ${BASE_PATH}/data/nifi-registry/flow_storage:/opt/nifi-registry/nifi-registry-current/flow_storage
-    restart: unless-stopped
-
-  postgres-app-server:
-    container_name: postgres-app-server
-    image: postgres:16-alpine3.18
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: app
-      PGDATA: /data/postgres
-    ports:
-      - 5432:5432
-    volumes:
-      - ${BASE_PATH}/data/postgres-app-server:/data/postgres
-      - ${BASE_PATH}/data/app-server/db-init.sql:/docker-entrypoint-initdb.d/init.sql
-
-  app-server:
-    container_name: app-server
-    image: python:3.8-slim-buster
-    depends_on:
-      - postgres-app-server
-    entrypoint: /app/docker-entrypoint.sh
-    environment:
-      SERVER_HOST: 0.0.0.0
-      SERVER_PORT: 5000
-    ports:
-      - 5000:5000
-    volumes:
-      - ${BASE_PATH}/data/app-server:/app
     restart: unless-stopped
 
   trino:
