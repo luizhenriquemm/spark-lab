@@ -10,3 +10,4 @@ data/nifi/state/*
 data/nifi-registry/*
 data/postgres-internal/postgres/*
 data/postgres-app-server/postgres/*
+data/minio/data/*
