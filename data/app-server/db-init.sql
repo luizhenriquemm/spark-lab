@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS clients (
     client_id SERIAL NOT NULL,
     name VARCHAR(64) NOT NULL,
     gender VARCHAR(16) NOT NULL,
-    birthdate DATE NOT NULL,
+    birthdate VARCHAR(16) NOT NULL,
     address VARCHAR(64) NOT NULL,
     city VARCHAR(64) NOT NULL,
     state VARCHAR(64) NOT NULL,
