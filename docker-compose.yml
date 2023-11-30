@@ -18,6 +18,8 @@ services:
       - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
     working_dir: /home/user/
     restart: unless-stopped
+    networks:
+      - default
 
   spark-master: 
     container_name: spark-master
@@ -37,6 +39,8 @@ services:
       - ${BASE_PATH}/data/spark/conf:/opt/bitnami/spark/conf
       - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
     restart: unless-stopped
+    networks:
+      - default
 
   spark-worker-0:
     container_name: spark-worker-0
@@ -46,7 +50,7 @@ services:
     environment:
       SPARK_MODE: worker
       SPARK_MASTER_URL: spark://spark-master:7077
-      SPARK_WORKER_MEMORY: 4G
+      SPARK_WORKER_MEMORY: 8G
       SPARK_WORKER_CORES: 12
       SPARK_RPC_AUTHENTICATION_ENABLED: no
       SPARK_RPC_ENCRYPTION_ENABLED: no
@@ -59,6 +63,8 @@ services:
       - ${BASE_PATH}/data/spark/conf:/opt/bitnami/spark/conf
       - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
     restart: unless-stopped
+    networks:
+      - default
 
   postgres-internal:
     container_name: postgres-internal
@@ -73,6 +79,9 @@ services:
     volumes:
       - ${BASE_PATH}/data/postgres-internal/postgres:/data/postgres
       - ${BASE_PATH}/data/postgres-internal/docker-entrypoint:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - default
 
   hive-metastore:
     container_name: hive-metastore
@@ -92,6 +101,8 @@ services:
       - ${BASE_PATH}/data/hive-metastore/warehouse:/opt/hive/data/warehouse
       - ${BASE_PATH}/data/hive-metastore/lib:/opt/hive/lib
     restart: unless-stopped
+    networks:
+      - default
 
   minio:
     container_name: minio
@@ -106,6 +117,9 @@ services:
       - 9001:9001
     volumes:
       - ${BASE_PATH}/data/minio/data:/bitnami/minio/data
+    restart: unless-stopped
+    networks:
+      - default
 
   zookeeper:
     container_name: zookeeper
@@ -136,6 +150,8 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     restart: unless-stopped
+    networks:
+      - default
 
   nifi:
     container_name: nifi
@@ -164,6 +180,8 @@ services:
       start_period: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - default
   
   nifi-registry:
     container_name: nifi-registry
@@ -180,6 +198,8 @@ services:
       - ${BASE_PATH}/data/nifi-registry/database:/opt/nifi-registry/nifi-registry-current/database 
       - ${BASE_PATH}/data/nifi-registry/flow_storage:/opt/nifi-registry/nifi-registry-current/flow_storage
     restart: unless-stopped
+    networks:
+      - default
 
   postgres-app-server:
     container_name: postgres-app-server
@@ -194,6 +214,9 @@ services:
     volumes:
       - ${BASE_PATH}/data/postgres-app-server/postgres:/data/postgres
       - ${BASE_PATH}/data/app-server/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - default
 
   app-server:
     container_name: app-server
@@ -209,6 +232,8 @@ services:
     volumes:
       - ${BASE_PATH}/data/app-server:/app
     restart: unless-stopped
+    networks:
+      - default
 
   trino:
     container_name: trino
@@ -217,6 +242,9 @@ services:
       - 8000:8080
     volumes:
       - ${BASE_PATH}/data/trino/catalog:/etc/trino/catalog
+    restart: unless-stopped
+    networks:
+      - default
 
   metabase:
     container_name: metabase
@@ -235,6 +263,9 @@ services:
       MB_PLUGINS_DIR: /plugins/
     volumes:
       - ${BASE_PATH}/data/metabase/plugins:/plugins
+    restart: unless-stopped
+    networks:
+      - default
     
 
 networks:
