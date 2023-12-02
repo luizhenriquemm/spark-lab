@@ -17,6 +17,7 @@ A simple environment for data processing in home or study projects.
 - Zookeeper
 - TrinoDB
 - Metabase
+- MageAI
 
 # Custom images
 
