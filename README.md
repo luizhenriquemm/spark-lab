@@ -38,6 +38,51 @@ As every container users a mounted volume for data persistence, there's a .env f
 
 Most of the saved data can be too large for beeing pushed into GitHub. Remember that if you need to move your environment to somewhere else.
 
+# How to begin the environment
+
+Most of the containers will do it fine on the first run, but you'll have to do this following configurations manually (in the first run only):
+
+#### Create a service user in the Minio S3
+
+After the Minio container is up, you will be able to access the UI by opening http://localhost:9001 it in the web browser. Use the credentials setted in the docker-compose.yml file to access the manegement panel:
+
+```
+MINIO_ROOT_USER: minioadmin
+MINIO_ROOT_PASSWORD: minioadmin
+```
+
+After that, in the Adminstrator section, go to Users in the Identity tab. Create a new user as follows:
+
+```
+User Name: minio
+Password: minioadmin
+
+Assign Policies:
+[x] consoleAdmin
+[x] diagnostics
+[x] readonly
+[x] readwrite
+```
+
+Once the user was created, you will be able to access the Minio S3 with the credentials.
+
+#### Download aws-java-sdk-bundle-1.12.588.jar
+
+As this jar is way too large to be pushed here, you will need to download it from the Maven repository in this link:
+
+```
+https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.588/aws-java-sdk-bundle-1.12.588.jar
+```
+
+And save it in these followings paths:
+
+```
+data/hive-metastore/lib/
+data/spark/jars/
+```
+
+Remember that you cant commit large files into GitHub, so this JAR is ignored by the gitignore file.
+
 # Any doubts?
 
 Contact me: https://www.linkedin.com/in/luiz-henrique-mm/

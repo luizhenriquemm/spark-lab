@@ -11,3 +11,7 @@ data/nifi-registry/*
 data/postgres-internal/postgres/*
 data/postgres-app-server/postgres/*
 data/minio/data/*
+data/mage/*
+
+data/hive-metastore/lib/aws-java-sdk-bundle-1.12.588.jar
+data/spark/jars/aws-java-sdk-bundle-1.12.588.jar
