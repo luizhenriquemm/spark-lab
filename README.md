@@ -71,11 +71,9 @@ Once the user was created, you will be able to access the Minio S3 with the cred
 
 As this jar is way too large to be pushed here, you will need to download it from the Maven repository in this link:
 
-```
 https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.588/aws-java-sdk-bundle-1.12.588.jar
-```
 
-And save it in these followings paths:
+And save it in the following paths:
 
 ```
 data/hive-metastore/lib/
