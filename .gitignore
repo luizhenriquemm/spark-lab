@@ -8,10 +8,11 @@ data/nifi/logs/*
 data/nifi/provenance_repository/*
 data/nifi/state/*
 data/nifi-registry/*
-data/postgres-internal/postgres/*
+data/postgres/postgres/*
 data/postgres-app-server/postgres/*
 data/minio/data/*
 data/mage/*
+data/airflow/logs/*
 
 data/hive-metastore/lib/aws-java-sdk-bundle-1.12.588.jar
 data/spark/jars/aws-java-sdk-bundle-1.12.588.jar

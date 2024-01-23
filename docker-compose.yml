@@ -50,8 +50,8 @@ services:
     environment:
       SPARK_MODE: worker
       SPARK_MASTER_URL: spark://spark-master:7077
-      SPARK_WORKER_MEMORY: 8G
-      SPARK_EXECUTOR_MEMORY: 8G
+      SPARK_WORKER_MEMORY: 32G
+      SPARK_EXECUTOR_MEMORY: 32G
       SPARK_WORKER_CORES: 12
       SPARK_RPC_AUTHENTICATION_ENABLED: no
       SPARK_RPC_ENCRYPTION_ENABLED: no
@@ -67,19 +67,19 @@ services:
     networks:
       - default
 
-  postgres-internal:
-    container_name: postgres-internal
+  postgres:
+    container_name: postgres
     image: postgres:16-alpine3.18
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       PGDATA: /data/postgres
-      POSTGRES_MULTIPLE_DATABASES: hive_metastore,metabase_app
+      POSTGRES_MULTIPLE_DATABASES: hive_metastore,metabase_app,airflow_app
     ports:
       - 9032:5432
     volumes:
-      - ${BASE_PATH}/data/postgres-internal/postgres:/data/postgres
-      - ${BASE_PATH}/data/postgres-internal/docker-entrypoint:/docker-entrypoint-initdb.d
+      - ${BASE_PATH}/data/postgres/postgres:/data/postgres
+      - ${BASE_PATH}/data/postgres/docker-entrypoint:/docker-entrypoint-initdb.d
     restart: unless-stopped
     networks:
       - default
@@ -88,13 +88,13 @@ services:
     container_name: hive-metastore
     image: apache/hive:4.0.0-beta-2-SNAPSHOT
     depends_on:
-      - postgres-internal
+      - postgres
     environment:
       SERVICE_NAME: metastore
       HIVE_VERSION: 4.0.0-beta-2-SNAPSHOT
       HIVE_CUSTOM_CONF_DIR: "/hive_custom_conf"
       DB_DRIVER: postgres
-      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-internal:5432/hive_metastore -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/hive_metastore -Djavax.jdo.option.ConnectionUserName=postgres -Djavax.jdo.option.ConnectionPassword=password"
     ports:
       - 9083:9083
     volumes:
@@ -251,7 +251,7 @@ services:
     container_name: metabase
     image: metabase/metabase:v0.47.7
     depends_on:
-      - postgres-internal
+      - postgres
     ports:
       - 3000:3000
     environment:
@@ -260,7 +260,7 @@ services:
       MB_DB_PORT: 5432
       MB_DB_USER: postgres
       MB_DB_PASS: password
-      MB_DB_HOST: postgres-internal
+      MB_DB_HOST: postgres
       MB_PLUGINS_DIR: /plugins/
     volumes:
       - ${BASE_PATH}/data/metabase/plugins:/plugins
@@ -280,6 +280,75 @@ services:
     volumes:
       - ${BASE_PATH}/data/mage:/home/src/
     restart: unless-stopped
+
+  airflow-init:
+    container_name: airflow-init
+    image: apache/airflow:2.0.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
+      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+      AIRFLOW__CORE__LOAD_EXAMPLES: False
+      AIRFLOW__CORE__LOGGING_LEVEL: INFO
+    volumes:
+      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
+      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
+      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
+      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
+    depends_on:
+      - postgres
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - airflow users list || ( airflow db init &&
+        airflow users create
+          --role Admin
+          --username airflow
+          --password airflow
+          --email airflow@airflow.com
+          --firstname airflow
+          --lastname airflow )
+    restart: on-failure
+
+  airflow-webserver:
+    container_name: airflow-webserver
+    image: apache/airflow:2.0.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
+      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+      AIRFLOW__CORE__LOAD_EXAMPLES: False
+      AIRFLOW__CORE__LOGGING_LEVEL: INFO
+    volumes:
+      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
+      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
+      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
+      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
+    command: airflow webserver
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    restart: always
+
+  airflow-scheduler:
+    container_name: airflow-scheduler
+    image: apache/airflow:2.0.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
+      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+      AIRFLOW__CORE__LOAD_EXAMPLES: False
+      AIRFLOW__CORE__LOGGING_LEVEL: INFO
+    volumes:
+      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
+      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
+      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
+      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
+    depends_on:
+      - postgres
+    command: airflow scheduler
+    restart: always
 
 networks:
   default:
