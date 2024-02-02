@@ -26,7 +26,7 @@ def kafka_producer_callback(err,msg):
         message = 'Produced message on topic {} with value of {}\n'.format(msg.topic(), msg.value().decode('utf-8'))
         print(message)
 
-def pgsql_get_conn(host="postgres-app-server", port="5432", dbname="app", user="postgres", password="password"):
+def pgsql_get_conn(host="postgres-debezium", port="5432", dbname="app", user="postgres", password="password"):
     conn = psycopg.connect(
         f"host={host} port={port} dbname={dbname} user={user} password={password}",
         row_factory=dict_row)

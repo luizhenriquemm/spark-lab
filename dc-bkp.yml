@@ -34,6 +34,73 @@ services:
     restart: on-failure:5
   
 
-  
+  airflow-init:
+    container_name: airflow-init
+    image: apache/airflow:2.0.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
+      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+      AIRFLOW__CORE__LOAD_EXAMPLES: False
+      AIRFLOW__CORE__LOGGING_LEVEL: INFO
+    volumes:
+      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
+      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
+      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
+      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
+    depends_on:
+      - postgres
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - airflow users list || ( airflow db init &&
+        airflow users create
+          --role Admin
+          --username airflow
+          --password airflow
+          --email airflow@airflow.com
+          --firstname airflow
+          --lastname airflow )
+    restart: on-failure
+
+  airflow-webserver:
+    container_name: airflow-webserver
+    image: apache/airflow:2.0.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
+      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+      AIRFLOW__CORE__LOAD_EXAMPLES: False
+      AIRFLOW__CORE__LOGGING_LEVEL: INFO
+    volumes:
+      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
+      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
+      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
+      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
+    command: airflow webserver
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+    restart: always
+
+  airflow-scheduler:
+    container_name: airflow-scheduler
+    image: apache/airflow:2.0.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
+      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+      AIRFLOW__CORE__LOAD_EXAMPLES: False
+      AIRFLOW__CORE__LOGGING_LEVEL: INFO
+    volumes:
+      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
+      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
+      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
+      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
+    depends_on:
+      - postgres
+    command: airflow scheduler
+    restart: always
 
   

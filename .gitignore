@@ -8,8 +8,10 @@ data/nifi/logs/*
 data/nifi/provenance_repository/*
 data/nifi/state/*
 data/nifi-registry/*
+data/kafka/*
 data/postgres/postgres/*
 data/postgres-app-server/postgres/*
+data/postgres-debezium/postgres/*
 data/minio/data/*
 data/mage/*
 data/airflow/logs/*

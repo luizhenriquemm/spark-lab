@@ -154,6 +154,17 @@ services:
     networks:
       - default
 
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+    ports:
+      - 9292:9000
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
   nifi:
     container_name: nifi
     image: apache/nifi:1.19.0
@@ -208,7 +219,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: app
+      POSTGRES_DB: app 
       PGDATA: /data/postgres
     ports:
       - 5432:5432
@@ -218,6 +229,41 @@ services:
     restart: unless-stopped
     networks:
       - default
+
+  postgres-debezium:
+    container_name: postgres-debezium
+    image: debezium/postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app 
+      PGDATA: /data/postgres
+    ports:
+      - 5433:5432
+    volumes:
+      - ${BASE_PATH}/data/postgres-debezium/postgres:/data/postgres
+      - ${BASE_PATH}/data/app-server/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - default
+
+  debezium-connect:
+    container_name: debezium-connect
+    image: debezium/connect:1.9
+    ports:
+      - 8083:8083
+    environment:
+      CONFIG_STORAGE_TOPIC: debezium_connect_configs
+      OFFSET_STORAGE_TOPIC: debezium_connect_offsets
+      STATUS_STORAGE_TOPIC: debezium_connect_statuses
+      BOOTSTRAP_SERVERS: kafka:29092
+    links:
+      - zookeeper
+      - postgres-debezium
+    depends_on:
+      - kafka
+      - zookeeper
+      - postgres-debezium  
 
   app-server:
     container_name: app-server
@@ -280,76 +326,7 @@ services:
     volumes:
       - ${BASE_PATH}/data/mage:/home/src/
     restart: unless-stopped
-
-  airflow-init:
-    container_name: airflow-init
-    image: apache/airflow:2.0.0
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
-      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
-      AIRFLOW__CORE__LOAD_EXAMPLES: False
-      AIRFLOW__CORE__LOGGING_LEVEL: INFO
-    volumes:
-      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
-      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
-      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
-      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
-    depends_on:
-      - postgres
-    entrypoint: /bin/bash
-    command:
-      - -c
-      - airflow users list || ( airflow db init &&
-        airflow users create
-          --role Admin
-          --username airflow
-          --password airflow
-          --email airflow@airflow.com
-          --firstname airflow
-          --lastname airflow )
-    restart: on-failure
-
-  airflow-webserver:
-    container_name: airflow-webserver
-    image: apache/airflow:2.0.0
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
-      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
-      AIRFLOW__CORE__LOAD_EXAMPLES: False
-      AIRFLOW__CORE__LOGGING_LEVEL: INFO
-    volumes:
-      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
-      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
-      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
-      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
-    command: airflow webserver
-    ports:
-      - 8080:8080
-    depends_on:
-      - postgres
-    restart: always
-
-  airflow-scheduler:
-    container_name: airflow-scheduler
-    image: apache/airflow:2.0.0
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres:5432/airflow_app
-      AIRFLOW__CORE__FERNET_KEY: FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
-      AIRFLOW__CORE__LOAD_EXAMPLES: False
-      AIRFLOW__CORE__LOGGING_LEVEL: INFO
-    volumes:
-      - ${BASE_PATH}/data/airflow/dags:/opt/airflow/dags
-      - ${BASE_PATH}/data/airflow/logs:/opt/airflow/logs
-      - ${BASE_PATH}/data/airflow/plugins:/opt/airflow/plugins
-      - ${BASE_PATH}/data/airflow/airflow.cfg:/opt/airlfow/airflow.cfg
-    depends_on:
-      - postgres
-    command: airflow scheduler
-    restart: always
-
+    
 networks:
   default:
     name: spark_lab
