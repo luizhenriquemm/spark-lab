@@ -257,6 +257,8 @@ services:
       OFFSET_STORAGE_TOPIC: debezium_connect_offsets
       STATUS_STORAGE_TOPIC: debezium_connect_statuses
       BOOTSTRAP_SERVERS: kafka:29092
+    volumes:
+      - ${BASE_PATH}/data/debezium-connect/libs:/kafka/connect
     links:
       - zookeeper
       - postgres-debezium
