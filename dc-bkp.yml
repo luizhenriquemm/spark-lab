@@ -1,8 +1,8 @@
 services:
 
   rapids-notebook:
-    image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
     container_name: rapids-notebook
+    image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
@@ -15,7 +15,7 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-
+              
   magic:
     image: mageai/mageai:latest
     command: mage start ${PROJECT_NAME}

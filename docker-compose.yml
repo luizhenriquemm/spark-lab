@@ -1,6 +1,22 @@
 version: '3'
 
 services:
+  rapids-notebook:
+    container_name: rapids-notebook
+    image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    ports:
+      - "8889:8888"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+              
   jupyter:
     container_name: jupyter
     build: images/jupyter/.
@@ -16,6 +32,7 @@ services:
     volumes:
       - ${BASE_PATH}/data/jupyter:/home/user/work
       - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
+      - ${BASE_PATH}/data/spark/python-libs:/home/user/python-libs
     working_dir: /home/user/
     restart: unless-stopped
     networks:
@@ -29,6 +46,7 @@ services:
       SPARK_RPC_AUTHENTICATION_ENABLED: null
       SPARK_RPC_ENCRYPTION_ENABLED: no
       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_DRIVER_MEMORY: 16G 
       SPARK_SSL_ENABLED: no
       SPARK_USER: spark
     ports:
@@ -50,9 +68,10 @@ services:
     environment:
       SPARK_MODE: worker
       SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_DAEMON_MEMORY: 32G
       SPARK_WORKER_MEMORY: 32G
       SPARK_EXECUTOR_MEMORY: 32G
-      SPARK_WORKER_CORES: 12
+      SPARK_WORKER_CORES: 10
       SPARK_RPC_AUTHENTICATION_ENABLED: no
       SPARK_RPC_ENCRYPTION_ENABLED: no
       SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no

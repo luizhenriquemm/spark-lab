@@ -88,3 +88,28 @@ Remember that you cant commit large files into GitHub, so this JAR is ignored by
 # Any doubts?
 
 Contact me: https://www.linkedin.com/in/luiz-henrique-mm/
+
+
+# Extra: How to install python libraries in the spark cluster
+
+Install the lib in a especific directory as this: 
+
+```sh
+mkdir libs
+
+pip install --target=./libs unidecode
+
+cd libs
+
+zip -r ../unidecode.zip .
+
+```
+
+Then move the zip into the data/spark/python-libs folder and run this:
+
+```python
+
+sc = spark.sparkContext
+sc.addPyFile("/home/user/python-libs/unidecode.zip")
+
+```
