@@ -310,6 +310,7 @@ services:
       - 8000:8080
     volumes:
       - ${BASE_PATH}/data/trino/catalog:/etc/trino/catalog
+      - ${BASE_PATH}/data/trino/plugin:/etc/trino/plugin
     restart: unless-stopped
     networks:
       - default
