@@ -30,5 +30,5 @@
         <identifier>single-user-provider</identifier>
         <class>org.apache.nifi.authentication.single.user.SingleUserLoginIdentityProvider</class>
         <property name="Username">admin</property>
-        <property name="Password">$2b$12$UM1k4qiG72NGfwW2Iuza3.RpjSw3DEC3e9f2RMGgXSDEvs.Tu8ZnG</property>
+        <property name="Password">$2b$12$ppr8EzyleFoHBsDoeVU7suxHMY0qnQJOpPFLUDd7dxQqkAdyA1Uym</property>
     </provider>

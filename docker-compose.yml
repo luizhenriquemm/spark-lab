@@ -1,21 +1,21 @@
 version: '3'
 
 services:
-  rapids-notebook:
-    container_name: rapids-notebook
-    image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    ports:
-      - "8889:8888"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+  # rapids-notebook:
+  #   container_name: rapids-notebook
+  #   image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=all
+  #     - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+  #   ports:
+  #     - "8889:8888"
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
               
   jupyter:
     container_name: jupyter
@@ -29,6 +29,7 @@ services:
       CHOWN_EXTRA_OPTS: "-R"
     ports:
       - 8888:8888
+      - 8840:4040
     volumes:
       - ${BASE_PATH}/data/jupyter:/home/user/work
       - ${BASE_PATH}/data/spark/jars:/opt/bitnami/spark/jars_external
