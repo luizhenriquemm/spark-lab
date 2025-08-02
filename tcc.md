@@ -4,7 +4,7 @@
 ### Executar o ambiente
 
 ```
-docker compose up -d jupyter spark-master spark-worker-0 postgres hive-metastore minio trino metabase 
+docker compose up -d jupyter spark-master spark-worker-0 postgres hive-metastore minio trino metabase rapids-notebook
 ```
 
 

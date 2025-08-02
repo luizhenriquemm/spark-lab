@@ -1,21 +1,19 @@
-version: '3'
-
 services:
-  # rapids-notebook:
-  #   container_name: rapids-notebook
-  #   image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
-  #   environment:
-  #     - NVIDIA_VISIBLE_DEVICES=all
-  #     - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-  #   ports:
-  #     - "8889:8888"
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: 1
-  #             capabilities: [gpu]
+  rapids-notebook:
+    container_name: rapids-notebook
+    image: rapidsai/notebooks:23.12a-cuda12.0-py3.9
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    ports:
+      - "8889:8888"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
               
   jupyter:
     container_name: jupyter
@@ -36,6 +34,35 @@ services:
       - ${BASE_PATH}/data/spark/python-libs:/home/user/python-libs
     working_dir: /home/user/
     restart: unless-stopped
+    networks:
+      - default
+
+  cuda-jupyter:
+    container_name: cuda-jupyter
+    build: images/cuda-jupyter/.
+    # image: nvcr.io/nvidia/tensorflow:23.10-tf2-py3
+    user: root
+    environment:
+      JUPYTER_TOKEN: "senha"
+      NVIDIA_VISIBLE_DEVICES: all
+    ports:
+      - 8890:8888
+    volumes:
+      - ${BASE_PATH}/data/jupyter:/workspace/work
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    # ipc: host
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      stack: 67108864
+    runtime: nvidia  # necessário para que o Docker use o runtime com GPU
+    # stdin_open: true
+    # tty: true
     networks:
       - default
 

@@ -10,6 +10,13 @@ RUN conda install --quiet --yes --no-pin \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
 
+COPY requirements.txt /tmp/requirements.txt
+
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+RUN fix-permissions $CONDA_DIR && \
+    fix-permissions /home/$NB_USER
+
 USER ${NB_UID}
 
 CMD ["/usr/local/bin/start.sh", "jupyter", "lab"]

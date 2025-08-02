@@ -16,5 +16,8 @@ data/minio/data/*
 data/mage/*
 data/airflow/logs/*
 
+data/jupyter/tcc/bases/*
+
 data/hive-metastore/lib/aws-java-sdk-bundle-1.12.588.jar
 data/spark/jars/aws-java-sdk-bundle-1.12.588.jar
+data/trino/plugin/delta/aws-java-sdk-bundle-1.12.588.jar

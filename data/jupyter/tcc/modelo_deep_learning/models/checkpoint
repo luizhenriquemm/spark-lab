@@ -1,0 +1,2 @@
+model_checkpoint_path: "modelo1_fitted_weights.tf"
+all_model_checkpoint_paths: "modelo1_fitted_weights.tf"
